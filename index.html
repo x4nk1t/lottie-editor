@@ -562,7 +562,7 @@
 
     document.getElementById("downloadBtn").addEventListener("click", () => {
       if (!originalData) return;
-      const blob = new Blob([JSON.stringify(originalData, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(originalData, null, 0)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
