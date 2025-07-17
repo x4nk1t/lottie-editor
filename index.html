@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lottie Color Editor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f8f9fa;
+      min-height: 100vh;
+      display: flex;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+    
+    #animation { 
+      flex: 1;
+      height: 100vh;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-right: 1px solid #e9ecef;
+    }
+    
+    #animation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                  linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                  linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                  linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+      opacity: 0.4;
+      z-index: 1;
+      transition: opacity 0.3s ease;
+    }
+    
+    #animation.has-animation::before {
+      opacity: 0;
+    }
+    
+    #animation > div {
+      position: relative;
+      z-index: 2;
+      max-width: 90%;
+      max-height: 90%;
+    }
+    
+    #editor { 
+      width: 350px;
+      background: white;
+      padding: 30px;
+      box-shadow: -2px 0 20px rgba(0,0,0,0.05);
+      border-left: 1px solid #e9ecef;
+      height: 100vh;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    
+    h3 {
+      color: #2c3e50;
+      margin-bottom: 25px;
+      font-size: 1.3em;
+      font-weight: 600;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    h3::before {
+      content: "🎨";
+      font-size: 1.2em;
+    }
+    
+    .upload-section {
+      margin-bottom: 25px;
+    }
+    
+    .upload-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #495057;
+      margin-bottom: 8px;
+    }
+    
+    #colorList {
+      max-height: calc(100vh - 300px);
+      overflow-y: auto;
+      margin-bottom: 25px;
+      padding-right: 5px;
+    }
+    
+    #colorList::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    #colorList::-webkit-scrollbar-track {
+      background: #f1f3f4;
+      border-radius: 3px;
+    }
+    
+    #colorList::-webkit-scrollbar-thumb {
+      background: #6c757d;
+      border-radius: 3px;
+    }
+    
+    #colorList::-webkit-scrollbar-thumb:hover {
+      background: #495057;
+    }
+    
+    .colorRow { 
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 12px;
+      transition: all 0.2s ease;
+      border: 1px solid #e9ecef;
+    }
+    
+    .colorRow:hover {
+      background: #e9ecef;
+      border-color: #dee2e6;
+    }
+    
+    .colorRow input[type="color"] { 
+      width: 44px;
+      height: 44px;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-right: 12px;
+      transition: all 0.2s ease;
+    }
+    
+    .colorRow input[type="color"]:hover {
+      border-color: #6c757d;
+    }
+    
+    .colorRow input[type="text"] {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid #e9ecef;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: 'Monaco', 'Consolas', monospace;
+      background: white;
+      transition: all 0.2s ease;
+    }
+    
+    .colorRow input[type="text"]:focus {
+      outline: none;
+      border-color: #495057;
+      box-shadow: 0 0 0 3px rgba(73, 80, 87, 0.1);
+    }
+    
+    #upload {
+      width: 100%;
+      padding: 12px;
+      border: 2px dashed #6c757d;
+      border-radius: 8px;
+      background: #f8f9fa;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 14px;
+      color: #495057;
+    }
+    
+    #upload:hover {
+      background: #e9ecef;
+      border-color: #495057;
+    }
+    
+    #downloadBtn { 
+      width: 100%;
+      padding: 12px 20px;
+      background: #2c3e50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    #downloadBtn::before {
+      content: "⬇";
+      font-size: 14px;
+    }
+    
+    #downloadBtn:hover {
+      background: #34495e;
+    }
+    
+    #downloadBtn:active {
+      transform: translateY(1px);
+    }
+    
+    #downloadBtn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6c757d;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .empty-state::before {
+      content: "🎨";
+      display: block;
+      font-size: 32px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+    
+    .color-count {
+      font-size: 12px;
+      color: #6c757d;
+      text-align: center;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 1024px) {
+      body {
+        flex-direction: column;
+      }
+      
+      #animation {
+        height: 50vh;
+        border-right: none;
+        border-bottom: 1px solid #e9ecef;
+      }
+      
+      #editor {
+        width: 100%;
+        height: 50vh;
+        border-left: none;
+        border-top: 1px solid #e9ecef;
+        box-shadow: 0 -2px 20px rgba(0,0,0,0.05);
+      }
+      
+      #colorList {
+        max-height: calc(50vh - 250px);
+      }
+    }
+    
+    @media (max-width: 640px) {
+      #editor {
+        padding: 20px;
+      }
+      
+      #animation {
+        height: 40vh;
+      }
+      
+      #editor {
+        height: 60vh;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="animation"></div>
+
+  <div id="editor">
+    <h3>Color Editor</h3>
+    
+    <div class="upload-section">
+      <label class="upload-label" for="upload">Upload Lottie File</label>
+      <input type="file" id="upload" accept=".json" />
+    </div>
+    
+    <div class="color-count" id="colorCount" style="display: none;"></div>
+    <div id="colorList"></div>
+    
+    <button id="downloadBtn" disabled>Download Edited File</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+  <script>
+    let animation = null;
+    let originalData = null;
+    let uploadedFileName = "edited-lottie.json";
+    const colorRefs = new Map();
+
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(c => {
+        const hex = Math.round(c * 255).toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      }).join("");
+    }
+
+    function hexToRgb(hex) {
+      const intVal = parseInt(hex.slice(1), 16);
+      return [
+        ((intVal >> 16) & 255) / 255,
+        ((intVal >> 8) & 255) / 255,
+        (intVal & 255) / 255,
+        1
+      ];
+    }
+
+    function getKey(colorArr) {
+      return colorArr.slice(0, 3).map(c => c.toFixed(4)).join(",");
+    }
+
+    function loadAnimation(data) {
+      const container = document.getElementById("animation");
+      if (animation) animation.destroy();
+      
+      animation = lottie.loadAnimation({
+        container: container,
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        animationData: JSON.parse(JSON.stringify(data))
+      });
+      
+      // Remove checkerboard pattern when animation is loaded
+      container.classList.add("has-animation");
+      
+      // Scale animation to fit the container while maintaining aspect ratio
+      animation.addEventListener('DOMLoaded', () => {
+        const svg = container.querySelector('svg');
+        if (svg) {
+          svg.style.width = '100%';
+          svg.style.height = '100%';
+          svg.style.maxWidth = '100%';
+          svg.style.maxHeight = '100%';
+        }
+      });
+    }
+
+    function isColorArray(arr) {
+      return Array.isArray(arr) && 
+             arr.length >= 3 && 
+             arr.length <= 4 && 
+             arr.every(val => typeof val === "number" && val >= 0 && val <= 1);
+    }
+
+    function collectColors(obj, path = "") {
+      if (Array.isArray(obj)) {
+        obj.forEach((item, index) => collectColors(item, `${path}[${index}]`));
+      } else if (obj && typeof obj === "object") {
+        for (const key in obj) {
+          const val = obj[key];
+          const currentPath = path ? `${path}.${key}` : key;
+
+          // Check if this is a color property with 'k' array
+          if (key === "k" && isColorArray(val)) {
+            const keyStr = getKey(val);
+            if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+            colorRefs.get(keyStr).push(val);
+          }
+          // Check for direct color arrays in specific color properties
+          else if ((key === "c" || key === "o" || key === "fc" || key === "sc" || key === "ec") && 
+                   val && typeof val === "object" && val.k && isColorArray(val.k)) {
+            const keyStr = getKey(val.k);
+            if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+            colorRefs.get(keyStr).push(val.k);
+          }
+          // Check for gradient colors
+          else if (key === "g" && val && val.k && val.k.k && Array.isArray(val.k.k)) {
+            const gradientData = val.k.k;
+            // Gradient colors are typically stored as [position, r, g, b, a, position, r, g, b, a, ...]
+            for (let i = 1; i < gradientData.length; i += 5) {
+              if (i + 3 < gradientData.length) {
+                const colorArr = [gradientData[i], gradientData[i + 1], gradientData[i + 2], gradientData[i + 3] || 1];
+                if (isColorArray(colorArr)) {
+                  const keyStr = getKey(colorArr);
+                  if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                  // Store reference to the gradient data and the index
+                  colorRefs.get(keyStr).push({
+                    isGradient: true,
+                    data: gradientData,
+                    startIndex: i
+                  });
+                }
+              }
+            }
+          }
+          // Check for text document colors (alternative text color structure)
+          else if (key === "t" && val && val.d && val.d.k && Array.isArray(val.d.k)) {
+            val.d.k.forEach(textDoc => {
+              if (textDoc.s && textDoc.s.fc && isColorArray(textDoc.s.fc)) {
+                const keyStr = getKey(textDoc.s.fc);
+                if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                colorRefs.get(keyStr).push(textDoc.s.fc);
+              }
+              if (textDoc.s && textDoc.s.sc && isColorArray(textDoc.s.sc)) {
+                const keyStr = getKey(textDoc.s.sc);
+                if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                colorRefs.get(keyStr).push(textDoc.s.sc);
+              }
+            });
+          }
+          // Check for text animators colors
+          else if (key === "a" && Array.isArray(val)) {
+            val.forEach(animator => {
+              if (animator.a && animator.a.fc && animator.a.fc.k && isColorArray(animator.a.fc.k)) {
+                const keyStr = getKey(animator.a.fc.k);
+                if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                colorRefs.get(keyStr).push(animator.a.fc.k);
+              }
+              if (animator.a && animator.a.sc && animator.a.sc.k && isColorArray(animator.a.sc.k)) {
+                const keyStr = getKey(animator.a.sc.k);
+                if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                colorRefs.get(keyStr).push(animator.a.sc.k);
+              }
+            });
+          }
+          // Check for effect colors
+          else if (key === "ef" && Array.isArray(val)) {
+            val.forEach(effect => {
+              if (effect.ef && Array.isArray(effect.ef)) {
+                effect.ef.forEach(prop => {
+                  if (prop.v && prop.v.k && isColorArray(prop.v.k)) {
+                    const keyStr = getKey(prop.v.k);
+                    if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                    colorRefs.get(keyStr).push(prop.v.k);
+                  }
+                });
+              }
+            });
+          }
+          // Check for mask colors
+          else if (key === "masksProperties" && Array.isArray(val)) {
+            val.forEach(mask => {
+              if (mask.cl && mask.cl.k && isColorArray(mask.cl.k)) {
+                const keyStr = getKey(mask.cl.k);
+                if (!colorRefs.has(keyStr)) colorRefs.set(keyStr, []);
+                colorRefs.get(keyStr).push(mask.cl.k);
+              }
+            });
+          }
+
+          collectColors(val, currentPath);
+        }
+      }
+    }
+
+    function renderColorInputs() {
+      const container = document.getElementById("colorList");
+      const colorCount = document.getElementById("colorCount");
+      const downloadBtn = document.getElementById("downloadBtn");
+      
+      container.innerHTML = "";
+
+      if (colorRefs.size === 0) {
+        container.innerHTML = '<div class="empty-state">Upload a Lottie file to start editing colors</div>';
+        colorCount.style.display = "none";
+        downloadBtn.disabled = true;
+        return;
+      }
+
+      // Show color count
+      colorCount.textContent = `${colorRefs.size} colors detected`;
+      colorCount.style.display = "block";
+      downloadBtn.disabled = false;
+
+      colorRefs.forEach((refs, keyStr) => {
+        const [r, g, b] = keyStr.split(",").map(Number);
+        const hex = rgbToHex(r, g, b);
+
+        const row = document.createElement("div");
+        row.className = "colorRow";
+
+        const colorInput = document.createElement("input");
+        colorInput.type = "color";
+        colorInput.value = hex;
+
+        const hexInput = document.createElement("input");
+        hexInput.type = "text";
+        hexInput.value = hex;
+
+        const applyChange = (newHex) => {
+          const rgba = hexToRgb(newHex);
+          refs.forEach(ref => {
+            if (ref.isGradient) {
+              // Handle gradient colors
+              ref.data[ref.startIndex] = rgba[0];
+              ref.data[ref.startIndex + 1] = rgba[1];
+              ref.data[ref.startIndex + 2] = rgba[2];
+              ref.data[ref.startIndex + 3] = rgba[3];
+            } else {
+              // Handle regular color arrays
+              for (let i = 0; i < 4; i++) ref[i] = rgba[i];
+            }
+          });
+          loadAnimation(originalData);
+        };
+
+        colorInput.addEventListener("input", () => {
+          hexInput.value = colorInput.value;
+          applyChange(colorInput.value);
+        });
+
+        hexInput.addEventListener("input", () => {
+          const val = hexInput.value;
+          if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            colorInput.value = val;
+            applyChange(val);
+          }
+        });
+
+        row.appendChild(colorInput);
+        row.appendChild(hexInput);
+        container.appendChild(row);
+      });
+    }
+
+    document.getElementById("upload").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      uploadedFileName = file.name.replace(/\.json$/i, "") + ".json";
+
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        try {
+          const json = JSON.parse(event.target.result);
+          originalData = json;
+          colorRefs.clear();
+          collectColors(json);
+          renderColorInputs();
+          loadAnimation(json);
+        } catch (err) {
+          alert("Invalid Lottie JSON.");
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      if (!originalData) return;
+      const blob = new Blob([JSON.stringify(originalData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = uploadedFileName;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>
